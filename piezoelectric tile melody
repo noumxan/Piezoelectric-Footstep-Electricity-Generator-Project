@@ -1,0 +1,141 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// Initialize the LCD with I2C address 0x20 and size 16x2
+LiquidCrystal_I2C lcd(0x20, 16, 2);
+
+// Define sensor input pins
+int sensor1 = A0;
+int sensor2 = A1;
+int sensor3 = A2;
+int sensor4 = A3;
+
+// Initialize count to keep track of sensor activations
+int count = 0;
+
+// Variables to store previous states of sensors
+bool previousState1 = LOW;
+bool previousState2 = LOW;
+bool previousState3 = LOW;
+bool previousState4 = LOW;
+
+void setup() {
+  // Set sensor pins as input
+  pinMode(sensor1, INPUT);
+  pinMode(sensor2, INPUT);
+  pinMode(sensor3, INPUT);
+  pinMode(sensor4, INPUT);
+
+  // Set pins 6, 7, 8, 9 as output for the speakers
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT); 
+  pinMode(9, OUTPUT); 
+  
+  // Initialize serial communication
+  Serial.begin(9600);
+  
+  // Initialize the LCD
+  lcd.init(); 
+  lcd.clear(); 
+  lcd.backlight();
+}
+
+void loop() {
+  // Read sensor values
+  int sensorValue1 = analogRead(sensor1);
+  int frequency1 = map(sensorValue1, 0, 1023, 450, 500);
+  
+  int sensorValue2 = analogRead(sensor2);
+  int frequency2 = map(sensorValue2, 0, 1023, 250, 500);
+  
+  int sensorValue3 = analogRead(sensor3);
+  int frequency3 = map(sensorValue3, 0, 1023, 50, 500);
+  
+  int sensorValue4 = analogRead(sensor4);
+  int frequency4 = map(sensorValue4, 0, 1023, 50, 500);
+
+  // Print sensor values to serial monitor for debugging
+  Serial.print(sensorValue1);
+  Serial.print(" ");
+  Serial.print(sensorValue2);
+  Serial.print(" ");
+  Serial.print(sensorValue3);
+  Serial.print(" ");
+  Serial.print(sensorValue4);
+  Serial.println();
+
+  // Check each sensor and update count and LCD if pressed
+  // Sensor 1
+  if (sensorValue1 > 100) {
+    if (previousState1 == LOW) {
+      count++;
+      updateLCD("Sensor 1 pressed!", count);
+      previousState1 = HIGH;
+    }
+    tone(8, frequency1);
+  } else {
+    noTone(8);
+    previousState1 = LOW;
+  }
+
+  // Sensor 2
+  if (sensorValue2 > 100) {
+    if (previousState2 == LOW) {
+      count++;
+      updateLCD("Sensor 2 pressed!", count);
+      previousState2 = HIGH;
+    }
+    tone(9, frequency2);  
+  } else {
+    noTone(9);
+    previousState2 = LOW;
+  }
+
+  // Sensor 3
+  if (sensorValue3 > 100) {
+    if (previousState3 == LOW) {
+      count++;
+      updateLCD("Sensor 3 pressed!", count);
+      previousState3 = HIGH;
+    }
+    tone(7, frequency3);  
+  } else {
+    noTone(7);
+    previousState3 = LOW;
+  }
+
+  // Sensor 4
+  if (sensorValue4 > 100) {
+    if (previousState4 == LOW) {
+      count++;
+      updateLCD("Sensor 4 pressed!", count);
+      previousState4 = HIGH;
+    }
+    tone(6, frequency4);
+  } else {
+    noTone(6);
+    previousState4 = LOW;
+  }
+
+  // If no sensors are pressed, display "Unavailable" on LCD
+  if (sensorValue1 <= 100 && sensorValue2 <= 100 
+      && sensorValue3 <= 100 && sensorValue4 <= 100 ) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Current");
+    lcd.setCursor(0, 1);
+    lcd.print("Unavailable");
+  }
+  delay(100); // Small delay to debounce and avoid excessive LCD updates
+}
+
+// Function to update LCD with a message and count
+void updateLCD(const char* message, int count) {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(message);
+  lcd.setCursor(0, 1);
+  lcd.print("Count: ");
+  lcd.print(count);
+}
